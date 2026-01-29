@@ -1,12 +1,24 @@
 {
-  "name": "strateko-render",
+  "name": "strateko-server",
   "version": "1.0.0",
+  "description": "StratEko scenario streaming API on Render",
   "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "openai": "^5.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2"
-  }
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
