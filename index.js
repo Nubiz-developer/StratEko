@@ -1,13 +1,12 @@
 import express from "express";
+import fetch from "node-fetch";
 import crypto from "crypto";
 
 const app = express();
 app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_API_KEY) {
-  console.error("Missing OPENAI_API_KEY");
-}
+if (!OPENAI_API_KEY) console.error("Missing OPENAI_API_KEY");
 
 /**
  * -------------------------
@@ -95,9 +94,7 @@ app.post("/create", async (req, res) => {
 app.get("/status/:jobId", (req, res) => {
   const job = jobs.get(req.params.jobId);
 
-  if (!job) {
-    return res.status(404).json({ error: "Job not found" });
-  }
+  if (!job) return res.status(404).json({ error: "Job not found" });
 
   res.json({
     success: true,
@@ -120,7 +117,6 @@ async function runOpenAIJob(jobId, instructions, input) {
       startedAt: Date.now()
     });
 
-    // Use global fetch (Node 18+) for streaming
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -157,7 +153,7 @@ async function runOpenAIJob(jobId, instructions, input) {
 
         try {
           const json = JSON.parse(line.replace("data: ", ""));
-          const delta = json?.output_text || json?.delta?.text || "";
+          const delta = extractDeltaFromChunk(json);
 
           if (delta) {
             const job = jobs.get(jobId);
@@ -182,6 +178,33 @@ async function runOpenAIJob(jobId, instructions, input) {
       error: err.message
     });
   }
+}
+
+/**
+ * -------------------------
+ * Extract text from streaming chunk
+ * -------------------------
+ */
+function extractDeltaFromChunk(json) {
+  if (!json) return "";
+
+  // Direct delta text
+  if (json?.delta?.type === "output_text" && json.delta.text) return json.delta.text;
+
+  // Older style
+  if (json?.output_text) return json.output_text;
+
+  // Look inside content array
+  if (Array.isArray(json?.content)) {
+    let text = "";
+    for (const block of json.content) {
+      if (block?.type === "output_text" && block.text) text += block.text;
+      if (block?.type === "text" && block.text) text += block.text;
+    }
+    return text;
+  }
+
+  return "";
 }
 
 /**
@@ -261,7 +284,7 @@ function normalizeTrends(trends) {
 
 /**
  * -------------------------
- * Server
+ * Server start
  * -------------------------
  */
 const port = process.env.PORT || 3000;
