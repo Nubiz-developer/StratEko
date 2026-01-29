@@ -142,6 +142,7 @@ app.get("/api/status/:jobId", (req, res) => {
 /**
  * -------------------------
  * STREAMING WORKER - RESPONSES API FOR GPT-5.2
+ * WITH CHUNKED DELIVERY FOR POLLING
  * -------------------------
  */
 async function runStreamingJob(jobId, instructions, input) {
@@ -167,6 +168,7 @@ async function runStreamingJob(jobId, instructions, input) {
 
         let fullText = "";
         let totalTokens = 0;
+        let receivedDeltas = false;
 
         // Process streaming events
         for await (const event of stream) {
@@ -176,6 +178,7 @@ async function runStreamingJob(jobId, instructions, input) {
             
             // Text delta events (incremental streaming)
             if (event.type === "response.output_item.delta") {
+                receivedDeltas = true;
                 if (event.delta?.type === "text_delta" && event.delta.text) {
                     fullText += event.delta.text;
                     
@@ -197,12 +200,7 @@ async function runStreamingJob(jobId, instructions, input) {
                             // Update with complete text if we somehow missed deltas
                             if (content.text.length > fullText.length) {
                                 fullText = content.text;
-                                const currentJob = jobs.get(jobId);
-                                if (currentJob) {
-                                    currentJob.text = fullText;
-                                    jobs.set(jobId, currentJob);
-                                }
-                                console.log(`[${jobId}] Got complete text: ${fullText.length} chars`);
+                                console.log(`[${jobId}] Got complete text from item.done: ${fullText.length} chars`);
                             }
                         }
                     }
@@ -238,6 +236,18 @@ async function runStreamingJob(jobId, instructions, input) {
             }
         }
 
+        // If we didn't receive deltas but have final text, simulate chunked delivery
+        if (!receivedDeltas && fullText.length > 0) {
+            console.log(`[${jobId}] No deltas received, simulating chunked delivery...`);
+            await simulateChunkedDelivery(jobId, fullText);
+        } else {
+            // Normal completion - just update the job
+            const finalJob = jobs.get(jobId);
+            if (finalJob) {
+                finalJob.text = fullText;
+            }
+        }
+
         // Mark completed
         const finalJob = jobs.get(jobId);
         if (finalJob) {
@@ -260,6 +270,44 @@ async function runStreamingJob(jobId, instructions, input) {
             jobs.set(jobId, job);
         }
     }
+}
+
+/**
+ * -------------------------
+ * SIMULATE CHUNKED DELIVERY
+ * Breaks down complete text into chunks for polling
+ * -------------------------
+ */
+async function simulateChunkedDelivery(jobId, fullText) {
+    const CHUNK_SIZE = 150; // Characters per chunk
+    const DELAY_MS = 300;   // Delay between chunks (ms)
+    
+    const job = jobs.get(jobId);
+    if (!job) return;
+    
+    console.log(`[${jobId}] Delivering ${fullText.length} chars in chunks of ${CHUNK_SIZE}`);
+    
+    let delivered = 0;
+    
+    while (delivered < fullText.length) {
+        const chunk = fullText.substring(0, delivered + CHUNK_SIZE);
+        
+        const currentJob = jobs.get(jobId);
+        if (currentJob) {
+            currentJob.text = chunk;
+            jobs.set(jobId, currentJob);
+        }
+        
+        delivered += CHUNK_SIZE;
+        console.log(`[${jobId}] Delivered ${chunk.length}/${fullText.length} chars`);
+        
+        // Don't delay on the last chunk
+        if (delivered < fullText.length) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
+    }
+    
+    console.log(`[${jobId}] Chunked delivery complete`);
 }
 
 /**
