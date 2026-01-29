@@ -154,7 +154,7 @@ async function runStreamingJob(jobId, instructions, input) {
         console.log(`[${jobId}] Starting stream...`);
 
         // Use Chat Completions API - THIS WORKS RELIABLY
-        const stream = await openai.chat.completions.create(= {
+        const stream = await openai.chat.completions.create({
             model: "gpt-5.2",
             service_tier: "priority",
             instructions,
