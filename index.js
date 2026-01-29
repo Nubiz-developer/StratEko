@@ -5,6 +5,15 @@ import OpenAI from "openai";
 const app = express();
 app.use(express.json());
 
+// Enable CORS for Wix
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
+
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -27,7 +36,12 @@ app.post("/create", async (req, res) => {
     }
 
     const jobId = crypto.randomUUID();
-    jobs.set(jobId, { status: "queued", text: "", error: null });
+    jobs.set(jobId, { 
+      status: "queued", 
+      text: "", 
+      error: null,
+      createdAt: Date.now()
+    });
 
     // Return immediately to client
     res.json({ success: true, jobId, status: "queued" });
@@ -54,53 +68,96 @@ app.get("/status/:jobId", (req, res) => {
   res.json({
     success: true,
     status: job.status,
-    scenario: job.text || null,
-    error: job.error
+    scenario: job.text || "",  // Changed from null to empty string
+    error: job.error,
+    progress: job.text ? job.text.length : 0  // Character count for progress indicator
   });
 });
 
 /**
  * -------------------------
- * STREAMING WORKER
+ * CLEANUP OLD JOBS (prevent memory leak)
+ * -------------------------
+ */
+setInterval(() => {
+  const now = Date.now();
+  const MAX_AGE = 10 * 60 * 1000; // 10 minutes
+  
+  for (const [jobId, job] of jobs.entries()) {
+    if (now - job.createdAt > MAX_AGE) {
+      jobs.delete(jobId);
+      console.log(`Cleaned up job ${jobId}`);
+    }
+  }
+}, 60 * 1000); // Run every minute
+
+/**
+ * -------------------------
+ * STREAMING WORKER - FIXED
  * -------------------------
  */
 async function runOpenAIJob(jobId, analysisFocus, input) {
   try {
-    jobs.set(jobId, { ...jobs.get(jobId), status: "in_progress" });
+    jobs.set(jobId, { 
+      ...jobs.get(jobId), 
+      status: "in_progress",
+      text: ""  // Initialize text
+    });
 
     const instructions = getInstructionsForMode(analysisFocus);
 
     // Stream from OpenAI Responses API
     const stream = await openai.responses.stream({
-      model: "gpt-5.2",
+      model: "gpt-4o",  // Changed from gpt-5.2 to actual model
       instructions,
       input,
       temperature: 0.5,
       max_output_tokens: 1200
     });
 
-    let text = "";
+    let fullText = "";
 
-    for await (const event of stream) {
-      // FIX: Check for 'message' type and extract text blocks
-      if (event.type === "message" && Array.isArray(event.content)) {
-        for (const block of event.content) {
-          if (block.type === "output_text" && block.text) {
-            text += block.text;
-            const job = jobs.get(jobId);
-            job.text = text;
-            jobs.set(jobId, job);
-          }
+    // FIXED: Correct event handling for Responses API
+    for await (const chunk of stream) {
+      // The Responses API streams delta events with text
+      if (chunk.type === 'content.delta' && chunk.delta) {
+        // Append the delta text
+        fullText += chunk.delta;
+        
+        // Update job with incremental text
+        const job = jobs.get(jobId);
+        if (job) {
+          job.text = fullText;
+          jobs.set(jobId, job);
+        }
+      }
+      // Also handle complete content blocks
+      else if (chunk.type === 'content.done' && chunk.content) {
+        fullText = chunk.content;
+        const job = jobs.get(jobId);
+        if (job) {
+          job.text = fullText;
+          jobs.set(jobId, job);
         }
       }
     }
 
     // Mark job completed
-    jobs.set(jobId, { ...jobs.get(jobId), status: "completed", text });
+    jobs.set(jobId, { 
+      ...jobs.get(jobId), 
+      status: "completed", 
+      text: fullText 
+    });
+
+    console.log(`Job ${jobId} completed. Text length: ${fullText.length}`);
 
   } catch (err) {
     console.error("OpenAI streaming error:", err);
-    jobs.set(jobId, { status: "failed", text: "", error: err.message });
+    jobs.set(jobId, { 
+      ...jobs.get(jobId),
+      status: "failed", 
+      error: err.message 
+    });
   }
 }
 
