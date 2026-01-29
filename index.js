@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 import crypto from "crypto";
 
 const app = express();
@@ -14,8 +13,6 @@ if (!OPENAI_API_KEY) {
  * -------------------------
  * In-memory job store
  * -------------------------
- * OK for testing / scoping.
- * Can be replaced with Redis later.
  */
 const jobs = new Map();
 
@@ -123,6 +120,7 @@ async function runOpenAIJob(jobId, instructions, input) {
       startedAt: Date.now()
     });
 
+    // Use global fetch (Node 18+) for streaming
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -159,10 +157,7 @@ async function runOpenAIJob(jobId, instructions, input) {
 
         try {
           const json = JSON.parse(line.replace("data: ", ""));
-          const delta =
-            json?.output_text ||
-            json?.delta?.text ||
-            "";
+          const delta = json?.output_text || json?.delta?.text || "";
 
           if (delta) {
             const job = jobs.get(jobId);
@@ -191,7 +186,7 @@ async function runOpenAIJob(jobId, instructions, input) {
 
 /**
  * -------------------------
- * Instructions (UNCHANGED)
+ * Instructions
  * -------------------------
  */
 function getInstructionsForMode(analysisFocus) {
@@ -219,7 +214,7 @@ Focus on feasibility and lock-in risk.
 
 /**
  * -------------------------
- * Prompt building (UNCHANGED)
+ * Prompt building
  * -------------------------
  */
 function buildUserPrompt({
