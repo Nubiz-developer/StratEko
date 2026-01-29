@@ -1,18 +1,19 @@
 {
   "name": "strateko-streaming-proxy",
   "version": "1.0.0",
-  "description": "Streaming proxy server for StratEko analysis with Wix Velo polling support",
+  "description": "Streaming proxy server for StratEko analysis with OpenAI Responses API",
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "keywords": [
     "openai",
     "streaming",
     "wix",
-    "velo"
+    "velo",
+    "responses-api"
   ],
   "author": "",
   "license": "MIT",

@@ -141,7 +141,7 @@ app.get("/api/status/:jobId", (req, res) => {
 
 /**
  * -------------------------
- * STREAMING WORKER
+ * STREAMING WORKER - USING RESPONSES API
  * -------------------------
  */
 async function runStreamingJob(jobId, instructions, input) {
@@ -153,52 +153,59 @@ async function runStreamingJob(jobId, instructions, input) {
 
         console.log(`[${jobId}] Starting stream...`);
 
-        // Call OpenAI Chat Completions API with streaming
-        const stream = await openai.chat.completions.create({
+        // Use OpenAI Responses API with streaming
+        const stream = await openai.responses.stream({
             model: "gpt-5.2",
-            service_tier: "priority",
-            messages: [
-                {
-                    role: "system",
-                    content: instructions
-                },
-                {
-                    role: "user",
-                    content: input
-                }
-            ],
+            instructions: instructions,
+            input: input,
             temperature: 0.5,
-            max_tokens: 1200,
-            stream: true,
-            stream_options: { include_usage: true }
+            max_output_tokens: 1200,
+            service_tier: "default"
         });
 
         let fullText = "";
         let totalTokens = 0;
 
-        // Process streaming chunks
-        for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta?.content;
+        // Process streaming events
+        for await (const event of stream) {
+            // Handle text delta events
+            if (event.type === "response.output_item.delta" && event.delta?.type === "text_delta") {
+                const delta = event.delta.text;
+                if (delta) {
+                    fullText += delta;
 
-            if (delta) {
-                fullText += delta;
+                    // Update job with incremental text
+                    const currentJob = jobs.get(jobId);
+                    if (currentJob) {
+                        currentJob.text = fullText;
+                        jobs.set(jobId, currentJob);
+                    }
 
-                // Update job with incremental text
-                const currentJob = jobs.get(jobId);
-                if (currentJob) {
-                    currentJob.text = fullText;
-                    jobs.set(jobId, currentJob);
-                }
-
-                // Log progress every 100 characters
-                if (fullText.length % 100 < delta.length) {
-                    console.log(`[${jobId}] Progress: ${fullText.length} chars`);
+                    // Log progress every 100 characters
+                    if (fullText.length % 100 < delta.length) {
+                        console.log(`[${jobId}] Progress: ${fullText.length} chars`);
+                    }
                 }
             }
 
-            // Capture token usage if available
-            if (chunk.usage) {
-                totalTokens = chunk.usage.total_tokens;
+            // Handle completed response
+            if (event.type === "response.done") {
+                if (event.response?.usage) {
+                    totalTokens = event.response.usage.total_tokens || 0;
+                }
+
+                // Extract final text from output
+                if (event.response?.output && Array.isArray(event.response.output)) {
+                    for (const item of event.response.output) {
+                        if (item.type === "message" && Array.isArray(item.content)) {
+                            for (const content of item.content) {
+                                if (content.type === "output_text" && content.text) {
+                                    fullText = content.text;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
