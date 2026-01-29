@@ -401,7 +401,6 @@ EXECUTION CHECKLIST (do not explain; just comply)
 1a) Each section must begin with exactly one short sentence (15–30 words)
 that explains how the bullets in that section interact causally.
 This sentence is allowed in addition to the bullets and must not repeat bullet wording.
-
 HARD OUTPUT TEMPLATE
 A) Baseline
 B) Stress
@@ -412,17 +411,109 @@ F) Mitigation
 
 CORE LOGIC (apply in this order)
 A) Baseline: No-action trajectory. Exclude the intervention entirely.
+Sector Baseline Viability & Industrial Lineage Check
+
+Before applying stressors, trends, or scenarios, perform a Sector Baseline Viability Check grounded in historical and structural reality.
+
+For the specified sector and geography, explicitly assess:
+	1.	Industrial Lineage
+	•	Describe how this sector has evolved in this geography over the last 30–50 years.
+	•	State clearly whether production has:
+	•	remained locally viable,
+	•	declined or hollowed out,
+	•	largely offshored,
+	•	or exited the region entirely.
+	2.	Current Functional Presence
+	•	Identify which parts of the value chain (if any) remain local
+(e.g. design, R&D, branding, niche production, prototyping).
+	•	If mass production is no longer present, state this explicitly.
+	3.	Baseline Structural Constraint
+	•	If the sector lacks a meaningful domestic or local production base, treat this as a baseline constraint, not a downstream risk.
+	•	Do not assume revival, reshoring, or competitiveness unless specific enabling conditions are explicitly provided by the user.
+	4.	Implications for Scenario Analysis
+	•	If the sector is structurally absent or marginal in the region, note that subsequent stressors (trade, energy, labor, capital) act on an already-fragile or non-existent base.
+	•	Where appropriate, state that the scenario begins from a non-viable or highly conditional baseline.
+
+This assessment must be stated explicitly in the Baseline section before any stress or future scenarios are explored.
 B) Stress: Apply user-assumed stress levels to the baseline (no mitigation here).
-C) Constraints: Identify dominant hard limits, lock-ins, and failure modes under stress.
+C) Constraints: Identify dominant hard limits, lock-ins, and failure modes under stress. In section C, explicitly identify the dominant constraint first.
+Subsequent bullets must explain how secondary constraints amplify or follow from it.
+Scenario
+A) Baseline
+This baseline describes how current environmental controls shape mining approvals, operations, and impacts, which then distribute benefits and harms across actors without added stressors.
+• Existing EIA/approval processes permit battery-material mining with conditions; firms benefit via access and revenue, while local ecosystems and Traditional Owners bear residual risks.
+• Compliance relies on monitoring, reporting, and penalties; large operators with legal capacity navigate rules more easily than smaller entrants.
+• Water, dust, tailings, and habitat disturbance remain managed but not eliminated; cumulative impacts accrue across projects and time.
+• Remote-location logistics and fly-in/fly-out work patterns externalize some social costs to regional services and communities.
+
+B) Stress
+These stressors intensify the baseline by weakening information quality and raising energy and climate pressures, which increases the chance that controls underperform in practice.
+• Information Breakdown (hard limit: reliable, timely data) degrades monitoring, community scrutiny, and regulator decision quality, increasing undetected non-compliance.
+• Energy Fragility (hard limit: dependable power/fuel) raises operating volatility, making shutdowns, maintenance deferrals, and emergency responses more likely.
+• Climate Limits (hard limit: heat/water extremes) increase water competition, dust events, and tailings risk, stressing permit assumptions and site designs.
+• External Domination (hard limit: local bargaining power) shifts leverage to external buyers/financiers, pressuring faster approvals and weaker conditions.
+
+C) Constraints
+A binding hard limit on trustworthy information and verification drives most failures, and other constraints amplify it by reducing enforcement credibility and operational resilience.
+• Dominant constraint: Information Breakdown hard limit prevents credible measurement, auditing, and enforcement, so rules exist on paper but weaken in effect.
+• Energy Fragility amplifies this by causing outages and rushed workarounds, increasing incident rates and reducing time for compliant monitoring and reporting.
+• Climate Limits amplify baseline tailings/water/dust risks, making historical baselines unreliable and increasing disputes over "acceptable" impacts.
+• External Domination locks in pro-extraction defaults by concentrating decision power outside the region, reducing local consent leverage and regulator independence.
+
+D) Classification
+Because the mechanism is an operating authorization framework that conditions extraction rather than removing it, it functions primarily as harm-limiting governance under stress.
+• Classification: (C) Mitigation / Harm Reduction.
+• Mechanism: permits, conditions, monitoring, and penalties aim to reduce damage while allowing mining to proceed.
+• Intent inferred from design: manage impacts, not halt extraction or repair past harm.
+• Hard limit context: effectiveness depends on verifiable information and enforceable sanctions.
+
+E) Net trajectory
+Under the stated stresses, the framework can reduce some harms but cannot fully counter the binding hard limits, so outcomes shift only modestly from the stressed baseline.
+• It partially changes the stressed baseline by setting minimum standards, but Information Breakdown hard limit means compliance becomes less observable and less enforceable.
+• Benefits still concentrate with mining firms and external purchasers via continued supply; losses concentrate in local water, habitat, and cultural values when breaches go unseen.
+• Energy Fragility and Climate Limits keep incident probability elevated, so the framework mainly shapes severity after events rather than preventing them.
+• External Domination keeps approval momentum high, limiting how far conditions can tighten without higher-level political backing.
+
+F) Mitigation
+Mitigation works only where it strengthens verification and enforcement despite the hard limit, while acknowledging that energy and climate constraints remain binding.
+• Shift to continuous, tamper-evident monitoring (telemetry, third-party custody, public dashboards) reduces Information Breakdown impacts, but the hard limit remains if audits lack independence.
+• Pre-commit enforceable stop-work triggers tied to objective thresholds (dust, water drawdown, tailings alarms) changes failure modes from "hidden drift" to "automatic pause."
+• Require bonded rehabilitation and tailings financial assurance sized to climate-stressed scenarios; this mitigates insolvency risk but cannot remove physical climate hard limits.
+• Create binding co-governance with funded Traditional Owner ranger/compliance roles to counter External Domination, but effectiveness depends on statutory authority and stable funding.
 D) Classification: Based on stated intent and mechanism (not hoped-for outcomes).
 E) Net trajectory: Does the intervention materially change the stressed baseline trajectory?
 F) Mitigation: Allowed scope depends on classification.
+In sections A and E, at least one bullet must explicitly state
+who or what benefits and who or what loses under the described trajectory.
+Do not assume the intervention is intended to mitigate stress or constraints.
+First determine whether it is corrective, neutral, or business-as-usual.
 
+SCOPE BY CLASSIFICATION
+- A or B: no credible mitigation within stated assumptions (see checklist rule).
+- C: mitigation only; specify which failure modes change and which remain binding; durability required.
+- D: treat repair as a claim; apply feasibility gates; downgrade to C or B if gates fail.
+
+FEASIBILITY GATES (apply only if classified D)
+- CapitalFreeze=3 → execution fails unless committed non-market financing specified.
+- Physical hard limit → no design/efficiency workaround unless capacity is removed.
+- Low institutional capacity → no enforcement/coordination without mechanism+funding.
+- Timing mismatch → outcome locked-in or partially irreversible.
+- Multi-actor required → default partial/fail unless binding authority specified.
+
+EVIDENCE DISCIPLINE
+- Any claimed benefit must include mechanism + the limiting hard limit in the same bullet.
+- Explicitly downgrade counterfactuals that do not materially alter the stressed baseline trajectory.
+- Use the term "hard limit".
 Use plain, concrete language.
 Prefer short sentences and active verbs.
-Use the term "hard limit" where applicable.
+Avoid stacked abstractions and internal jargon where a common term conveys the same meaning.
+When applicable, state that the intervention "does not materially change the baseline trajectory" without implying failure or mitigation intent.
+Geographic references must be causal and constraint-relevant.
+Do not describe place unless it materially changes feasibility,
+risk, enforcement, or irreversibility.
 `.trim();
 
+    // ✅ AUTHORIZATION FRAMEWORK MODE
     if (analysisFocus === "authorizationFramework") {
         return `${COMMON}
 
@@ -433,6 +524,7 @@ The intervention is the existing framework itself.
 `.trim();
     }
 
+    // ✅ PROJECT MODE (default)
     return `${COMMON}
 
 MODE FOCUS
