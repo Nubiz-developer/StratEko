@@ -5,10 +5,12 @@ import OpenAI from "openai";
 const app = express();
 app.use(express.json());
 
+// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// In-memory job store
 const jobs = new Map();
 
 /**
@@ -19,12 +21,15 @@ const jobs = new Map();
 app.post("/create", async (req, res) => {
   try {
     const { country, sector, description, trends, analysisFocus } = req.body;
-    if (!country || !sector || !description)
-      return res.status(400).json({ error: "Missing inputs" });
+
+    if (!country || !sector || !description) {
+      return res.status(400).json({ error: "Missing required inputs" });
+    }
 
     const jobId = crypto.randomUUID();
     jobs.set(jobId, { status: "queued", text: "", error: null });
 
+    // Return immediately to client
     res.json({ success: true, jobId, status: "queued" });
 
     // Start streaming in background
@@ -32,19 +37,20 @@ app.post("/create", async (req, res) => {
     runOpenAIJob(jobId, analysisFocus, userPrompt);
 
   } catch (err) {
-    console.error(err);
+    console.error("Create scenario error:", err);
     res.status(500).json({ error: "Failed to create scenario" });
   }
 });
 
 /**
  * -------------------------
- * STATUS
+ * STATUS POLLING
  * -------------------------
  */
 app.get("/status/:jobId", (req, res) => {
   const job = jobs.get(req.params.jobId);
   if (!job) return res.status(404).json({ error: "Job not found" });
+
   res.json({
     success: true,
     status: job.status,
@@ -64,6 +70,7 @@ async function runOpenAIJob(jobId, analysisFocus, input) {
 
     const instructions = getInstructionsForMode(analysisFocus);
 
+    // Stream from OpenAI Responses API
     const stream = await openai.responses.stream({
       model: "gpt-5.2",
       instructions,
@@ -73,15 +80,22 @@ async function runOpenAIJob(jobId, analysisFocus, input) {
     });
 
     let text = "";
+
     for await (const event of stream) {
-      if (event.type === "output_text") {
-        text += event.text;
-        const job = jobs.get(jobId);
-        job.text = text;
-        jobs.set(jobId, job);
+      // FIX: Check for 'message' type and extract text blocks
+      if (event.type === "message" && Array.isArray(event.content)) {
+        for (const block of event.content) {
+          if (block.type === "output_text" && block.text) {
+            text += block.text;
+            const job = jobs.get(jobId);
+            job.text = text;
+            jobs.set(jobId, job);
+          }
+        }
       }
     }
 
+    // Mark job completed
     jobs.set(jobId, { ...jobs.get(jobId), status: "completed", text });
 
   } catch (err) {
