@@ -116,26 +116,25 @@ app.post("/api/create", async (req, res) => {
  */
 app.get("/api/status/:jobId", (req, res) => {
     const job = jobs.get(req.params.jobId);
-
     if (!job) {
-        return res.status(404).json({
-            success: false,
-            error: "Job not found"
-        });
+        return res.status(404).json({ success: false, error: "Job not found" });
     }
+
+    const cursor = Number(req.query.cursor || 0);
+    const fullText = job.text || "";
+
+    // Slice only the new part
+    const delta = fullText.slice(cursor);
+    const nextCursor = fullText.length;
 
     res.json({
         success: true,
         status: job.status,
-        scenario: job.text || "",
+        delta,                // 👈 ONLY new characters
+        nextCursor,           // 👈 client stores this
+        done: job.status === "completed",
         error: job.error,
-        tokensUsed: job.tokensUsed,
-        progress: {
-            characterCount: job.text ? job.text.length : 0,
-            estimatedCompletion: job.status === "in_progress" ?
-                Math.min(95, Math.floor((job.text.length / 3000) * 100)) :
-                (job.status === "completed" ? 100 : 0)
-        }
+        tokensUsed: job.tokensUsed
     });
 });
 
